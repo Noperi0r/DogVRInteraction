@@ -1,14 +1,16 @@
 using Oculus.Interaction.Input;
 using Oculus.Interaction.PoseDetection;
+using Oculus.Interaction.Samples.PalmMenu;
 using UnityEngine;
+using UnityEngine.XR.OpenXR.Features.Interactions;
 
 public class PetStrokeDetector : MonoBehaviour
 {
     [SerializeField] HandRef hand;
-    [SerializeField] float minSpeed = 0.10f;   // m/s
-    [SerializeField] float maxVertDisp = 0.05f;// Y축 편차 허용
+    [SerializeField] GameObject rHandVisualObj;
+    [SerializeField] float minSpeed = 0.5f;   // m/s
+    [SerializeField] float maxVertDisp = 0.07f;// Y축 편차 허용
 
-    int strokedCount;
     Vector3 lastPos;
     bool stroking;
 
@@ -36,8 +38,14 @@ public class PetStrokeDetector : MonoBehaviour
             return;
         }
 
-        Vector3 cur = hand.transform.position;
+        // palamdown track
+        hand.Hand.GetJointPose(HandJointId.HandPalm, out Pose pose);
+        Vector3 palmNormal = pose.rotation * Vector3.down;
+        bool isPalmDown = Vector3.Dot(palmNormal, Vector3.down) > 0.5f;
+
+        Vector3 cur = rHandVisualObj.transform.position;
         Vector3 delta = cur - lastPos;
+
         float speed = delta.magnitude / Time.deltaTime; // dist / t 
 
         // 주행 방향이 거의 수평이고 속도가 일정 이상이면 stroke
@@ -51,7 +59,6 @@ public class PetStrokeDetector : MonoBehaviour
         }
         else if (stroking)
         {
-            strokedCount++;
             OnStrokeEnd();
             stroking = false;
         }
